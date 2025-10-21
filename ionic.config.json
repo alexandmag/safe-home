@@ -1,0 +1,8 @@
+{
+  "name": "SafeHome",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular",
+  "id": "f887f34d"
+}
