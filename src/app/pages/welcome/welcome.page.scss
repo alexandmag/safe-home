@@ -1,0 +1,42 @@
+ion-content {
+    --background: url("../../../assets/welcome.png") center / cover no-repeat;
+    --overflow: hidden;
+
+    .welcome-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: end;
+        flex-direction: column;
+        padding: 2em;
+        text-align: center;
+        color: #fff;
+
+        h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 1em;
+            font-weight: 300;    
+            margin-bottom: 2em;
+        }
+
+        ion-button {
+            --background: linear-gradient(135deg, #ed9916, #BA770F);
+            --border-radius: 10px;
+            --padding-top: 20px;
+            --padding-bottom: 20px;
+            --padding-end: 32px;
+            --padding-start: 32px;
+
+            font-size: 1.2em;
+            font-weight: 400;
+            --box-shadow: 0 30px 60px 0 #02173e;
+            margin-bottom: 3.5em;
+            text-transform: none;
+        }
+    }
+}

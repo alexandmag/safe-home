@@ -1,0 +1,23 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/welcome"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Cadastro</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div class="register-container">
+    <h2>Criar Conta</h2>
+    
+    <ion-button expand="block" (click)="register()">
+      Cadastrar
+    </ion-button>
+    
+    <p>
+      Já tem conta? 
+      <a routerLink="/login">Faça login</a>
+    </p>
+  </div>
+</ion-content>

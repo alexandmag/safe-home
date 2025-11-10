@@ -1,0 +1,18 @@
+ion-popover::part(content) {
+    overflow: hidden !important;
+}
+
+ion-popover ion-content {
+    --overflow: hidden !important;
+    overflow: hidden !important;
+    --background: transparent;
+}
+
+ion-popover {
+    --backdrop-opacity: 0.5;
+    --box-shadow: 0 0 20px 0 #18181b60;
+}
+
+.logout-button::part(native) {
+    border-radius: 14px;
+}

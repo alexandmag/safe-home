@@ -1,0 +1,165 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-title color="primary" slot="start">Monitoramento</ion-title>
+    <ion-button fill="clear" (click)="configuraUsuario()" slot="end">
+      <ion-icon  color="primary" name="settings-sharp"></ion-icon>
+    </ion-button>
+
+  </ion-toolbar>
+</ion-header>
+
+<ion-content color="light">
+  <ion-list [inset]="true">
+
+    <ion-item lines="none">
+      <ion-label><h2>Monitorados:</h2></ion-label>
+    </ion-item>
+
+    <ion-item-sliding>
+      <ion-item [button]="true">
+        <ion-label><p>Rick Astley</p></ion-label>
+      </ion-item>
+      <ion-item-options slot="end">
+        <ion-item-option color="primary">
+          <ion-icon slot="icon-only" name="enter"></ion-icon>
+        </ion-item-option>
+        <ion-item-option color="warning">
+          <ion-icon slot="icon-only" name="pencil"></ion-icon>
+        </ion-item-option>
+        <ion-item-option color="danger" expandable="true">
+          <ion-icon slot="icon-only" name="trash"></ion-icon>
+        </ion-item-option>
+      </ion-item-options>
+    </ion-item-sliding>
+
+    <ion-item>
+      <ion-label slot="start"><h3>Adicionar Monitorado</h3></ion-label>
+      <ion-button id="open-modal" slot="end" expand="block" fill="clear" shape="round">
+        <ion-icon slot="icon-only" size="large" name="add-circle"></ion-icon>
+      </ion-button>
+    </ion-item>
+  </ion-list>
+
+  <ion-card>
+    <ion-card-header>
+      <ion-card-subtitle>Dashboard</ion-card-subtitle>
+    </ion-card-header>
+
+    <ion-card-content>
+      <canvas #grafico1></canvas>
+    </ion-card-content>
+  </ion-card>
+
+  <ion-modal trigger="open-modal">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar>
+          <ion-buttons slot="start">
+            <ion-button (click)="cancel()">Cancelar</ion-button>
+          </ion-buttons>
+          <ion-title>Adicionar Monitorado</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="confirm()" [strong]="true">Confirmar</ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="ion-padding">
+        <ion-item>
+          <ion-input
+            required
+            label="Nome:"
+            labelPlacement="stacked"
+            type="text"
+            placeholder="Insira o nome"
+            [(ngModel)]="pessoa.name"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            required
+            (ionInput)="mascararCPF($event)"
+            maxlength="14"
+            label="CPF:"
+            labelPlacement="stacked"
+            placeholder="Insira o cpf"
+            [(ngModel)]="pessoa.cpf"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            required
+            (ionInput)="mascararTelefone($event)"
+            maxlength="15"
+            label="Telefone:"
+            labelPlacement="stacked"
+            placeholder="Insira o telefone"
+            [(ngModel)]="pessoa.phone"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            required
+            label="Email:"
+            labelPlacement="stacked"
+            type="email"
+            placeholder="Insira o email"
+            [(ngModel)]="pessoa.email"
+          ></ion-input>
+        </ion-item>
+
+        <ion-label><p>Endereço:</p></ion-label>
+        <ion-item>
+          <ion-input
+            required
+            label="Rua:"
+            labelPlacement="stacked"
+            type="text"
+            placeholder="Insira a rua"
+            [(ngModel)]="pessoa.address.street"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            required
+            label="Número:"
+            labelPlacement="stacked"
+            type="number"
+            placeholder="Insira o número"
+            [(ngModel)]="pessoa.address.house"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            required
+            label="Bairro:"
+            labelPlacement="stacked"
+            type="text"
+            placeholder="Insira o bairro"
+            [(ngModel)]="pessoa.address.neighborhood"
+          ></ion-input>
+        </ion-item>
+
+        <ion-item>
+          <ion-input
+            required
+            label="Cidade:"
+            labelPlacement="stacked"
+            type="text"
+            placeholder="Insira a cidade"
+            [(ngModel)]="pessoa.address.city"
+          ></ion-input>
+        </ion-item>
+        
+        <ion-text color="danger" *ngIf="!isFormValid()">
+          <p>Preencha todos os campos antes de confirmar.</p>
+        </ion-text>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
