@@ -2,8 +2,8 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Chart } from 'chart.js/auto';
-import { IonModal, NavController } from '@ionic/angular';
-import { HttpClient } from '@angular/common/http';
+import { IonModal, NavController, ToastController } from '@ionic/angular';
+import axios from 'axios';
 
 @Component({
   selector: 'app-home',
@@ -15,7 +15,8 @@ export class HomePage {
   @ViewChild(IonModal) modal!: IonModal;
   @ViewChild('grafico1') grafico1!: ElementRef<HTMLCanvasElement>;
   public chart: any;
-  private apiUrl = 'https://safe-home-backend.onrender.com/api/person';
+  public monitorados: any;
+  private apiUrl = 'https://safe-home-backend.onrender.com/api/person/';
 
   public pessoa = {
       responsavelId: "6912527f27fea258b8a9b5dd",
@@ -49,8 +50,12 @@ export class HomePage {
     private authService: AuthService,
     private router: Router,
     private navCtrl: NavController,
-    private http: HttpClient
+    private toastCtrl: ToastController,
   ) {}
+
+  ionViewWillEnter() {
+    this.getMonitorados();
+  }
 
   ionViewDidEnter() {
     const canvas = this.grafico1.nativeElement;
@@ -83,12 +88,48 @@ export class HomePage {
     this.navCtrl.navigateForward('/configuracao-usuario');
   }
 
-  adicionaMonitorado() {
-    this.http.post(this.apiUrl, {person: this.pessoa}).subscribe({
-      next: (res) => console.log('✅ Pessoa criada:', res),
-      error: (err) => console.error('❌ Erro ao criar pessoa:', err)
-    });
+  async getMonitorados() {
+    try {
+      const res = await axios.get(`${this.apiUrl}getPersonByID/${this.pessoa.responsavelId}`);
+      this.monitorados = res.data;
+      console.log("✅ getMonitorados res:", this.monitorados);
+    } catch (error) {
+      console.error("❌ Erro ao buscar pessoa:", error);
+    }
   }
+  
+  async adicionaMonitorado() {
+    try {
+      const res = await axios.post(this.apiUrl, this.pessoa);
+      console.log('✅ adicionaMonitorado res:', res.data);
+
+      const toast = await this.toastCtrl.create({
+        message: 'Monitorado adicionado com sucesso!',
+        duration: 2000,
+        color: 'success'
+      });
+      toast.present();
+    } catch (error) {
+      console.error('❌ Erro ao adicionar monitorado:', error);
+
+      const toast = await this.toastCtrl.create({
+        message: 'Erro ao adicionar monitorado.',
+        duration: 2000,
+        color: 'danger'
+      });
+      toast.present();
+    }
+  }
+
+  // async deletarMonitorado(id: string) {
+  //   try {
+  //     await axios.delete(`${this.apiUrl}${id}`);
+  //     this.monitorados = this.monitorados.filter(p => p._id !== id);
+  //     console.log('🗑️ Monitorado removido com sucesso');
+  //   } catch (error) {
+  //     console.error('❌ Erro ao remover monitorado:', error);
+  //   }
+  // }
 
   isFormValid(): boolean {
     const p = this.pessoa;
