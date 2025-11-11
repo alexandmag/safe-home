@@ -1,8 +1,9 @@
+import { SafeHomeApi } from './../../services/safe-home-api';
 import { Component, ElementRef, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { Chart } from 'chart.js/auto';
-import { IonModal, NavController, ToastController } from '@ionic/angular';
+import { AlertController, IonModal, NavController, ToastController } from '@ionic/angular';
 import axios from 'axios';
 
 @Component({
@@ -16,7 +17,6 @@ export class HomePage {
   @ViewChild('grafico1') grafico1!: ElementRef<HTMLCanvasElement>;
   public chart: any;
   public monitorados: any;
-  private apiUrl = 'https://safe-home-backend.onrender.com/api/person/';
 
   public pessoa = {
       responsavelId: "6912527f27fea258b8a9b5dd",
@@ -50,11 +50,12 @@ export class HomePage {
     private authService: AuthService,
     private router: Router,
     private navCtrl: NavController,
-    private toastCtrl: ToastController,
+    private alertCtrl: AlertController,
+    private safeHomeApi: SafeHomeApi
   ) {}
 
-  ionViewWillEnter() {
-    this.getMonitorados();
+  async ionViewWillEnter() {
+    this.monitorados = await this.safeHomeApi.getMonitorados();
   }
 
   ionViewDidEnter() {
@@ -88,48 +89,30 @@ export class HomePage {
     this.navCtrl.navigateForward('/configuracao-usuario');
   }
 
-  async getMonitorados() {
-    try {
-      const res = await axios.get(`${this.apiUrl}getPersonByID/${this.pessoa.responsavelId}`);
-      this.monitorados = res.data;
-      console.log("✅ getMonitorados res:", this.monitorados);
-    } catch (error) {
-      console.error("❌ Erro ao buscar pessoa:", error);
-    }
+  async confirmarDelecao(id: string, nome: string) {
+    const alert = await this.alertCtrl.create({
+      header: 'Confirmar exclusão',
+      message: `Tem certeza que deseja excluir ${nome}?`,
+      buttons: [
+        {
+          text: 'Cancelar',
+          role: 'cancel',
+          handler: () => {
+            console.log('🟡 Exclusão cancelada');
+          },
+        },
+        {
+          text: 'Excluir',
+          role: 'destructive',
+          handler: async () => {
+            this.monitorados = await this.safeHomeApi.deletarMonitorado(id, this.monitorados);
+          },
+        },
+      ],
+    });
+
+    await alert.present();
   }
-  
-  async adicionaMonitorado() {
-    try {
-      const res = await axios.post(this.apiUrl, this.pessoa);
-      console.log('✅ adicionaMonitorado res:', res.data);
-
-      const toast = await this.toastCtrl.create({
-        message: 'Monitorado adicionado com sucesso!',
-        duration: 2000,
-        color: 'success'
-      });
-      toast.present();
-    } catch (error) {
-      console.error('❌ Erro ao adicionar monitorado:', error);
-
-      const toast = await this.toastCtrl.create({
-        message: 'Erro ao adicionar monitorado.',
-        duration: 2000,
-        color: 'danger'
-      });
-      toast.present();
-    }
-  }
-
-  // async deletarMonitorado(id: string) {
-  //   try {
-  //     await axios.delete(`${this.apiUrl}${id}`);
-  //     this.monitorados = this.monitorados.filter(p => p._id !== id);
-  //     console.log('🗑️ Monitorado removido com sucesso');
-  //   } catch (error) {
-  //     console.error('❌ Erro ao remover monitorado:', error);
-  //   }
-  // }
 
   isFormValid(): boolean {
     const p = this.pessoa;
@@ -170,7 +153,7 @@ export class HomePage {
     if (this.isFormValid()) {
       console.log('Pessoa confirmada:', this.pessoa);
       this.modal.dismiss(this.pessoa.name, 'confirm');
-      this.adicionaMonitorado();
+      this.safeHomeApi.adicionaMonitorado(this.pessoa);
     }
   }
 
