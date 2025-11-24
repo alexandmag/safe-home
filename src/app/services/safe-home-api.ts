@@ -1,83 +1,169 @@
 import { Injectable } from '@angular/core';
-import { ToastController } from '@ionic/angular';
+import { LoadingController, ToastController } from '@ionic/angular';
 import axios from 'axios';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class SafeHomeApi {
-  private apiUrl = 'https://safe-home-backend.onrender.com/api/person/';
 
-  constructor (
+  // ROTAS DA API
+  private personUrl = 'https://safe-home-backend.onrender.com/api/person/';
+  private monitoringUrl = 'https://safe-home-backend.onrender.com/api/monitoring/';
+
+  // Subjects
+  private monitoradosSubject = new BehaviorSubject<any[]>([]);
+  monitorados$ = this.monitoradosSubject.asObservable();
+
+  private incidentesSubject = new BehaviorSubject<any[]>([]);
+  incidentes$ = this.incidentesSubject.asObservable();
+
+  constructor(
     private toastCtrl: ToastController,
+    private loadingCtrl: LoadingController
   ) {}
 
-  async getMonitorados() {
+  /* ------------------------------------------------------
+   * UTILITÁRIOS (loading + toast)
+   * ------------------------------------------------------ */
+  private async showLoading(message = "Carregando...") {
+    const loading = await this.loadingCtrl.create({ message });
+    await loading.present();
+    return loading;
+  }
+
+  private async showToast(message: string, color = "primary") {
+    const toast = await this.toastCtrl.create({
+      message,
+      color,
+      duration: 2000
+    });
+    toast.present();
+  }
+
+  /* ------------------------------------------------------
+   * SEÇÃO: PERSON API
+   * ------------------------------------------------------ */
+
+  /** Obter lista de monitorados */
+  async getMonitorados(responsavelId: string) {
+    const loading = await this.showLoading();
     try {
-      const res = await axios.get(this.apiUrl);
-      console.log("✅ getMonitorados res:", res.data);
+      const res = await axios.get(`${this.personUrl}getMonitored/${responsavelId}`);
+      this.monitoradosSubject.next(res.data);
+    } catch (err) {
+      console.error("❌ Erro ao buscar monitorados:", err);
+      this.showToast("Erro ao buscar monitorados.", "danger");
+    } finally {
+      loading.dismiss();
+    }
+  }
+
+  /** Obter pessoa por ID */
+  async getPessoaPorID(id: string) {
+    const loading = await this.showLoading();
+    try {
+      const res = await axios.get(`${this.personUrl}getPersonByID/${id}`);
       return res.data;
-    } catch (error) {
-      console.error("❌ Erro ao buscar pessoa:", error);
+    } catch (err) {
+      console.error("❌ Erro ao buscar pessoa:", err);
+      this.showToast("Erro ao buscar pessoa.", "danger");
+    } finally {
+      loading.dismiss();
     }
   }
 
-  async getPessoaPorID(pessoa:any, monitorados:any) {
+  /** Criar monitorado */
+  async adicionaMonitorado(pessoa: any) {
+    const loading = await this.showLoading();
     try {
-      const res = await axios.get(`${this.apiUrl}getPersonByID/${pessoa.responsavelId}`);
-      monitorados = res.data;
-      console.log("✅ getMonitorados res:", monitorados);
-    } catch (error) {
-      console.error("❌ Erro ao buscar pessoa:", error);
-    }
-  }
-  
-  async adicionaMonitorado(pessoa:any) {
-    try {
-      const res = await axios.post(this.apiUrl, pessoa);
-      console.log('✅ adicionaMonitorado res:', res.data);
+      const res = await axios.post(this.personUrl, pessoa);
 
-      const toast = await this.toastCtrl.create({
-        message: 'Monitorado adicionado com sucesso!',
-        duration: 2000,
-        color: 'success'
-      });
-      toast.present();
-    } catch (error) {
-      console.error('❌ Erro ao adicionar monitorado:', error);
+      // API retorna { message, data }
+      const data = res.data.data;
 
-      const toast = await this.toastCtrl.create({
-        message: 'Erro ao adicionar monitorado.',
-        duration: 2000,
-        color: 'danger'
-      });
-      toast.present();
+      // Atualiza a lista local
+      this.monitoradosSubject.next([...this.monitoradosSubject.value, data]);
+
+      this.showToast("Monitorado adicionado com sucesso!", "success");
+    } catch (err) {
+      console.error("❌ Erro ao adicionar monitorado:", err);
+      this.showToast("Erro ao adicionar monitorado.", "danger");
+    } finally {
+      loading.dismiss();
     }
   }
 
-  async deletarMonitorado(id: string, monitorados:any) {
+    /** Editar um monitorado */
+  async updatePerson(personId: string, body: any) {
+    const loading = await this.showLoading();
     try {
-      const res = await axios.delete(`${this.apiUrl}${id}`);
+      const res = await axios.put(
+        `${this.personUrl}${personId}`,
+        body
+      );
+      this.showToast("Monitorado atualizado!", "success");
+      return res.data;
+    } catch (err) {
+      console.error("❌ Erro ao editar pessoa:", err);
+      this.showToast("Erro ao editar monitorado.", "danger");
+    } finally {
+      loading.dismiss();
+    }
+  }
 
-      monitorados = monitorados.filter((p: any) => p._id !== id);
-      console.log("🗑️ Monitorado removido com sucesso:", res.data);
+  /** Deletar monitorado */
+  async deletarMonitorado(id?: string) {
+    const loading = await this.showLoading();
+    try {
+      await axios.delete(`${this.personUrl}${id}`);
 
-      const toast = await this.toastCtrl.create({
-        message: 'Monitorado removido com sucesso!',
-        duration: 2000,
-        color: 'success'
-      });
-      toast.present();
-      return monitorados;
-    } catch (error) {
-      console.error("❌ Erro ao remover monitorado:", error);
+      const novaLista = this.monitoradosSubject.value.filter(m => m._id !== id);
+      this.monitoradosSubject.next(novaLista);
 
-      const toast = await this.toastCtrl.create({
-        message: 'Erro ao remover monitorado.',
-        duration: 2000,
-        color: 'danger'
-      });
-      toast.present();
+      this.showToast("Monitorado removido!", "success");
+    } catch (err) {
+      console.error("❌ Erro ao remover monitorado:", err);
+      this.showToast("Erro ao remover monitorado.", "danger");
+    } finally {
+      loading.dismiss();
+    }
+  }
+
+  /* ------------------------------------------------------
+   * SEÇÃO: MONITORING API
+   * ------------------------------------------------------ */
+
+  /** Obter incidentes de todos os monitorados do responsável */
+  async getIncidentesDoResponsavel(responsavelId: string) {
+    const loading = await this.showLoading();
+    try {
+      const res = await axios.get(
+        `${this.monitoringUrl}getMonitoringByResponsibleID/${responsavelId}`
+      );
+      this.incidentesSubject.next(res.data);
+    } catch (err) {
+      console.error("❌ Erro ao buscar incidentes:", err);
+      this.showToast("Erro ao carregar incidentes.", "danger");
+    } finally {
+      loading.dismiss();
+    }
+  }
+
+  /** Obter incidentes de uma pessoa específica */
+  async getIncidentesDaPessoa(personId: string) {
+    const loading = await this.showLoading();
+    try {
+      const res = await axios.get(
+        `${this.monitoringUrl}getMonitoringByPersonID/${personId}`
+      );
+      return res.data;
+    } catch (err) {
+      console.error("❌ Erro ao buscar incidentes da pessoa:", err);
+      this.showToast("Erro ao carregar incidentes.", "danger");
+    } finally {
+      loading.dismiss();
     }
   }
 }
